@@ -1,9 +1,9 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
 
 const setTokenSecrets = () => {
   process.env.ACCESS_TOKEN_SECRET = 'access-secret';
@@ -14,21 +14,11 @@ const setTokenSecrets = () => {
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
-  let prisma: PrismaClient;
+  let prisma: PrismaService;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = 'file:./dev.db';
     setTokenSecrets();
-
-    prisma = new PrismaClient();
-    await prisma.user.deleteMany();
-    await prisma.user.create({
-      data: {
-        email: 'admin@example.com',
-        passwordHash: await bcrypt.hash('secret123', 10),
-        role: 'admin',
-      },
-    });
 
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
@@ -36,11 +26,27 @@ describe('Auth (e2e)', () => {
 
     app = moduleRef.createNestApplication();
     await app.init();
+
+    prisma = app.get(PrismaService);
+    await prisma.user.deleteMany();
+    await prisma.user.createMany({
+      data: [
+        {
+          email: 'admin@example.com',
+          passwordHash: await bcrypt.hash('secret123', 10),
+          role: 'admin',
+        },
+        {
+          email: 'user@example.com',
+          passwordHash: await bcrypt.hash('secret123', 10),
+          role: 'user',
+        },
+      ],
+    });
   });
 
   afterAll(async () => {
     await app.close();
-    await prisma.$disconnect();
   });
 
   it('/auth/login (POST) returns accessToken and refreshToken', async () => {
@@ -57,22 +63,36 @@ describe('Auth (e2e)', () => {
     );
   });
 
-  it('/auth/refresh (POST) returns new accessToken and refreshToken', async () => {
+  it('/auth/refresh (POST) rotates refresh token and rejects replay', async () => {
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: 'admin@example.com', password: 'secret123' });
 
-    const response = await request(app.getHttpServer())
+    const rotatedResponse = await request(app.getHttpServer())
       .post('/auth/refresh')
       .send({ refreshToken: loginResponse.body.refreshToken });
 
-    expect(response.status).toBe(201);
-    expect(response.body).toEqual(
+    expect(rotatedResponse.status).toBe(201);
+    expect(rotatedResponse.body).toEqual(
       expect.objectContaining({
         accessToken: expect.any(String),
         refreshToken: expect.any(String),
       }),
     );
+    expect(rotatedResponse.body.refreshToken).not.toBe(
+      loginResponse.body.refreshToken,
+    );
+
+    const replayResponse = await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ refreshToken: loginResponse.body.refreshToken });
+    expect(replayResponse.status).toBe(401);
+    expect(replayResponse.body.message).toBe('Invalid refresh token');
+
+    const newestResponse = await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ refreshToken: rotatedResponse.body.refreshToken });
+    expect(newestResponse.status).toBe(201);
   });
 
   it('/auth/refresh (POST) rejects invalid refresh token', async () => {
@@ -82,6 +102,44 @@ describe('Auth (e2e)', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Invalid refresh token');
+  });
+
+  it('/auth/me (GET) returns current user for valid access token', async () => {
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'admin@example.com', password: 'secret123' });
+
+    const response = await request(app.getHttpServer())
+      .get('/auth/me')
+      .set('Authorization', `Bearer ${loginResponse.body.accessToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        email: 'admin@example.com',
+        role: 'admin',
+      }),
+    );
+  });
+
+  it('/auth/admin-check (GET) allows admin and forbids non-admin', async () => {
+    const adminLogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'admin@example.com', password: 'secret123' });
+    const adminResponse = await request(app.getHttpServer())
+      .get('/auth/admin-check')
+      .set('Authorization', `Bearer ${adminLogin.body.accessToken}`);
+    expect(adminResponse.status).toBe(200);
+    expect(adminResponse.body).toEqual({ ok: true });
+
+    const userLogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'user@example.com', password: 'secret123' });
+    const userResponse = await request(app.getHttpServer())
+      .get('/auth/admin-check')
+      .set('Authorization', `Bearer ${userLogin.body.accessToken}`);
+    expect(userResponse.status).toBe(403);
+    expect(userResponse.body.message).toBe('Forbidden resource');
   });
 });
 
