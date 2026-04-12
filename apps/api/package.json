@@ -2,6 +2,10 @@
   "name": "api",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "node": "22.x",
+    "npm": "11.x"
+  },
   "main": "dist/src/main",
   "scripts": {
     "build": "nest build",
