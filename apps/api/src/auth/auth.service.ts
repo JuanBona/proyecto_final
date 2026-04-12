@@ -1,13 +1,16 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { PrismaService } from '../prisma/prisma.service';
+import { AUTH_SECRETS, AuthSecrets } from './auth.constants';
 
 @Injectable()
 export class AuthService {
-  private readonly prisma = new PrismaClient();
-
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+    @Inject(AUTH_SECRETS) private readonly authSecrets: AuthSecrets,
+  ) {}
 
   async login(email: string, password: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
@@ -29,7 +32,7 @@ export class AuthService {
     try {
       const payload = await this.jwtService.verifyAsync<{ sub: string }>(
         refreshToken,
-        { secret: process.env.JWT_REFRESH_SECRET ?? 'refresh-secret' },
+        { secret: this.authSecrets.refreshTokenSecret },
       );
 
       const user = await this.prisma.user.findUnique({
@@ -51,11 +54,11 @@ export class AuthService {
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_ACCESS_SECRET ?? 'access-secret',
+        secret: this.authSecrets.accessTokenSecret,
         expiresIn: '15m',
       }),
       this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_REFRESH_SECRET ?? 'refresh-secret',
+        secret: this.authSecrets.refreshTokenSecret,
         expiresIn: '7d',
       }),
     ]);
