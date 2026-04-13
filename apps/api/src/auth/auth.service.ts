@@ -1,6 +1,7 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { createHash, randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AUTH_SECRETS, AuthSecrets } from './auth.constants';
 
@@ -39,7 +40,8 @@ export class AuthService {
         where: { id: payload.sub },
       });
 
-      if (!user) {
+      const refreshTokenHash = this.hashToken(refreshToken);
+      if (!user || user.currentRefreshTokenHash !== refreshTokenHash) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
@@ -58,11 +60,21 @@ export class AuthService {
         expiresIn: '15m',
       }),
       this.jwtService.signAsync(payload, {
+        jwtid: randomUUID(),
         secret: this.authSecrets.refreshTokenSecret,
         expiresIn: '7d',
       }),
     ]);
 
+    await this.prisma.user.update({
+      where: { id },
+      data: { currentRefreshTokenHash: this.hashToken(refreshToken) },
+    });
+
     return { accessToken, refreshToken };
+  }
+
+  private hashToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
   }
 }
