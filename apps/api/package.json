@@ -12,7 +12,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node .",
-    "dev": "PORT=${API_PORT:-3001} npm run start:dev",
+    "dev": "cross-env PORT=3001 npm run start:dev",
     "test": "jest --passWithNoTests",
     "test:e2e": "DATABASE_URL=file:./dev.db prisma migrate deploy --schema ./prisma/schema.prisma && jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate --schema ./prisma/schema.prisma",
@@ -29,6 +29,8 @@
     "@nestjs/platform-express": "^11.1.18",
     "@prisma/client": "^5.17.0",
     "bcryptjs": "^3.0.2",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.4.2",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {

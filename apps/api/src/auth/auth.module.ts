@@ -16,6 +16,6 @@ import { PrismaModule } from '../prisma/prisma.module';
     RolesGuard,
     { provide: AUTH_SECRETS, useFactory: createAuthSecrets },
   ],
-  exports: [AuthService, JwtAuthGuard, RolesGuard],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, JwtModule, AUTH_SECRETS],
 })
 export class AuthModule {}
