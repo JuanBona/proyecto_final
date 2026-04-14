@@ -1,14 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
-export interface CreateTripDto {
-  destination: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  budget: number;
-  costCenter: string;
-}
+import { CreateTripDto } from './dto/create-trip.dto';
 
 @Injectable()
 export class TripsService {
@@ -20,15 +12,23 @@ export class TripsService {
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       throw new HttpException(
-        { code: 'INVALID_DATE', message: 'startDate and endDate must be valid ISO date strings', statusCode: 400 },
+        {
+          code: 'VALIDATION_ERROR',
+          message: 'startDate and endDate must be valid ISO date strings',
+          statusCode: 400,
+        },
         HttpStatus.BAD_REQUEST,
       );
     }
 
     if (endDate <= startDate) {
       throw new HttpException(
-        { code: 'INVALID_DATE_RANGE', message: 'endDate must be after startDate', statusCode: 422 },
-        HttpStatus.UNPROCESSABLE_ENTITY,
+        {
+          code: 'VALIDATION_ERROR',
+          message: 'endDate must be after startDate',
+          statusCode: 400,
+        },
+        HttpStatus.BAD_REQUEST,
       );
     }
 
@@ -86,6 +86,13 @@ export class TripsService {
   async findOne(userId: string, role: string, tripId: string) {
     const trip = await this.findTripOrFail(tripId);
 
+    if (role === 'approver' && trip.status !== 'pending_approval') {
+      throw new HttpException(
+        { code: 'FORBIDDEN', message: 'Access denied', statusCode: 403 },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     if (role !== 'approver' && trip.travelerId !== userId) {
       throw new HttpException(
         { code: 'FORBIDDEN', message: 'Access denied', statusCode: 403 },
@@ -110,7 +117,14 @@ export class TripsService {
     decision: 'approved' | 'rejected',
     comment?: string,
   ) {
-    await this.findTripOrFail(tripId);
+    const trip = await this.findTripOrFail(tripId);
+
+    if (trip.travelerId === approverId) {
+      throw new HttpException(
+        { code: 'FORBIDDEN', message: 'Approver cannot review own trip', statusCode: 403 },
+        HttpStatus.FORBIDDEN,
+      );
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.tripRequest.updateMany({

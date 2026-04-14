@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcryptjs';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { createRequestValidationPipe } from '../src/common/request-validation';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 const setTokenSecrets = () => {
@@ -25,9 +26,12 @@ describe('Auth (e2e)', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    app.useGlobalPipes(createRequestValidationPipe());
     await app.init();
 
     prisma = app.get(PrismaService);
+    await prisma.approval.deleteMany();
+    await prisma.tripRequest.deleteMany();
     await prisma.user.deleteMany();
     await prisma.user.createMany({
       data: [

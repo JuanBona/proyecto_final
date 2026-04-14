@@ -65,7 +65,7 @@ Se registra en `AppModule`. Reutiliza `PrismaModule`, `JwtAuthGuard` y `RolesGua
 | POST   | `/trips`                | traveler              | Crea solicitud en estado `draft`                 |
 | POST   | `/trips/:id/submit`     | traveler              | Pasa de `draft` a `pending_approval`             |
 | GET    | `/trips`                | traveler / approver   | Viajero ve las suyas; aprobador ve `pending_approval` |
-| GET    | `/trips/:id`            | traveler / approver   | Ver detalle de una solicitud                     |
+| GET    | `/trips/:id`            | traveler / approver   | Viajero ve solo su solicitud; aprobador solo `pending_approval` |
 | POST   | `/trips/:id/approve`    | approver              | Aprueba la solicitud                             |
 | POST   | `/trips/:id/reject`     | approver              | Rechaza con comentario opcional                  |
 
@@ -82,6 +82,7 @@ draft → pending_approval → approved
 - Solo el dueño (`travelerId`) puede hacer submit de su solicitud.
 - Solo un usuario con rol `approver` puede aprobar o rechazar.
 - No se puede aprobar/rechazar una solicitud que no esté en `pending_approval`.
+- Un aprobador no puede aprobar/rechazar una solicitud propia (`approverId !== travelerId`).
 - El viajero solo puede ver y operar sus propias solicitudes.
 - El aprobador ve todas las solicitudes en `pending_approval`.
 

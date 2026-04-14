@@ -2,7 +2,10 @@ import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/comm
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { CreateTripDto, TripsService } from './trips.service';
+import { CreateTripDto } from './dto/create-trip.dto';
+import { TripDecisionDto } from './dto/trip-decision.dto';
+import { TripIdParamDto } from './dto/trip-id-param.dto';
+import { TripsService } from './trips.service';
 
 interface AuthenticatedRequest {
   user: { sub: string; email: string; role: string };
@@ -21,8 +24,8 @@ export class TripsController {
 
   @Post(':id/submit')
   @Roles('traveler')
-  submit(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.tripsService.submit(req.user.sub, id);
+  submit(@Req() req: AuthenticatedRequest, @Param() params: TripIdParamDto) {
+    return this.tripsService.submit(req.user.sub, params.id);
   }
 
   @Get()
@@ -33,27 +36,27 @@ export class TripsController {
 
   @Get(':id')
   @Roles('traveler', 'approver')
-  findOne(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.tripsService.findOne(req.user.sub, req.user.role, id);
+  findOne(@Req() req: AuthenticatedRequest, @Param() params: TripIdParamDto) {
+    return this.tripsService.findOne(req.user.sub, req.user.role, params.id);
   }
 
   @Post(':id/approve')
   @Roles('approver')
   approve(
     @Req() req: AuthenticatedRequest,
-    @Param('id') id: string,
-    @Body() body: { comment?: string },
+    @Param() params: TripIdParamDto,
+    @Body() body: TripDecisionDto,
   ) {
-    return this.tripsService.approve(req.user.sub, id, body.comment);
+    return this.tripsService.approve(req.user.sub, params.id, body.comment);
   }
 
   @Post(':id/reject')
   @Roles('approver')
   reject(
     @Req() req: AuthenticatedRequest,
-    @Param('id') id: string,
-    @Body() body: { comment?: string },
+    @Param() params: TripIdParamDto,
+    @Body() body: TripDecisionDto,
   ) {
-    return this.tripsService.reject(req.user.sub, id, body.comment);
+    return this.tripsService.reject(req.user.sub, params.id, body.comment);
   }
 }
