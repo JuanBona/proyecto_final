@@ -8,22 +8,19 @@ export class OutboxWorker {
   constructor(private readonly prisma: PrismaService) {}
 
   async processPending(limit = 50) {
-    const outboxEvents = await (this.prisma as any).outboxEvent.findMany({
+    const outboxEvents = await this.prisma.outboxEvent.findMany({
+      where: { status: 'pending' },
       orderBy: { createdAt: 'asc' },
       take: limit,
     });
 
     for (const event of outboxEvents) {
-      if (event.processedAt) {
-        continue;
-      }
-
-      await (this.prisma as any).outboxEvent.update({
+      await this.prisma.outboxEvent.update({
         where: { id: event.id },
-        data: { processedAt: new Date() },
+        data: { processedAt: new Date(), status: 'processed', attempts: event.attempts + 1 },
       });
 
-      this.logger.debug('Processed outbox event ' + event.id + ' (' + event.type + ')');
+      this.logger.debug('Processed outbox event ' + event.id + ' (' + event.eventType + ')');
     }
 
     return { processed: outboxEvents.length };

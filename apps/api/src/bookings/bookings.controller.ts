@@ -3,7 +3,6 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { TripIdParamDto } from '../trips/dto/trip-id-param.dto';
 import { BookingsService } from './bookings.service';
 
 interface AuthenticatedRequest {
@@ -13,7 +12,17 @@ interface AuthenticatedRequest {
 class ConfirmBookingDto {
   @IsString()
   @IsNotEmpty()
+  tripId!: string;
+
+  @IsString()
+  @IsNotEmpty()
   optionId!: string;
+}
+
+class BookingOptionsParamDto {
+  @IsString()
+  @IsNotEmpty()
+  tripId!: string;
 }
 
 @Controller('bookings')
@@ -21,19 +30,15 @@ class ConfirmBookingDto {
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
-  @Get(':id/options')
+  @Get('options/:tripId')
   @Roles('traveler', 'approver')
-  getOptions(@Param() params: TripIdParamDto) {
-    return this.bookingsService.getOptions(params.id);
+  getOptions(@Req() req: AuthenticatedRequest, @Param() params: BookingOptionsParamDto) {
+    return this.bookingsService.getOptions(req.user.sub, req.user.role, params.tripId);
   }
 
-  @Post(':id/confirm')
+  @Post('confirm')
   @Roles('approver')
-  confirm(
-    @Req() req: AuthenticatedRequest,
-    @Param() params: TripIdParamDto,
-    @Body() body: ConfirmBookingDto,
-  ) {
-    return this.bookingsService.confirmBooking(req.user.sub, params.id, body.optionId);
+  confirm(@Req() req: AuthenticatedRequest, @Body() body: ConfirmBookingDto) {
+    return this.bookingsService.confirmBooking(req.user.sub, body.tripId, body.optionId);
   }
 }

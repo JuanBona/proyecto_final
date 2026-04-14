@@ -9,13 +9,13 @@ export class BookingsService {
     private readonly mockProviderClient: MockProviderClient,
   ) {}
 
-  async getOptions(tripId: string): Promise<MockBookingOption[]> {
+  async getOptions(userId: string, role: string, tripId: string): Promise<MockBookingOption[]> {
     const trip = await this.findTripOrFail(tripId);
 
-    if (trip.status !== 'approved') {
+    if (role !== 'approver' && trip.travelerId !== userId) {
       throw new HttpException(
-        { code: 'INVALID_STATUS', message: 'Trip is not approved', statusCode: 409 },
-        HttpStatus.CONFLICT,
+        { code: 'FORBIDDEN', message: 'Access denied', statusCode: 403 },
+        HttpStatus.FORBIDDEN,
       );
     }
 
@@ -56,21 +56,27 @@ export class BookingsService {
         );
       }
 
-      const booking = await (tx as any).booking.create({
+      const booking = await tx.booking.create({
         data: {
           tripRequestId: tripId,
           provider: option.provider,
-          total: option.total,
+          offerId: option.id,
+          currency: 'USD',
+          totalPrice: option.total,
+          snapshot: JSON.stringify(option),
           status: 'booked',
         },
       });
 
-      await (tx as any).outboxEvent.create({
+      await tx.outboxEvent.create({
         data: {
-          type: 'BookingConfirmed',
+          aggregateType: 'TripRequest',
+          aggregateId: tripId,
+          eventType: 'BookingConfirmed',
           payload: JSON.stringify({
             tripId,
             bookingId: booking.id,
+            optionId: option.id,
             provider: option.provider,
             total: option.total,
             confirmedBy: approverId,
