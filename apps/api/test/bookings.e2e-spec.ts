@@ -53,6 +53,8 @@ describe('Bookings (e2e)', () => {
       await prisma.$executeRawUnsafe(`DELETE FROM ${quoteIdentifier(name)}`);
     }
 
+    await prisma.auditLog.deleteMany();
+    await prisma.expense.deleteMany();
     await prisma.approval.deleteMany();
     await prisma.tripRequest.deleteMany();
     await prisma.user.deleteMany();

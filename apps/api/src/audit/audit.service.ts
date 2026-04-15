@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 interface AuditRecordInput {
   action: string;
@@ -10,17 +11,11 @@ interface AuditRecordInput {
 
 @Injectable()
 export class AuditService {
-  async logWithClient(client: unknown, input: AuditRecordInput) {
-    const auditClient = (client as { auditLog?: { create?: (args: unknown) => Promise<unknown> } }).auditLog;
-
-    if (!auditClient?.create) {
-      return null;
-    }
-
-    return auditClient.create({
+  async logWithClient(client: Prisma.TransactionClient, input: AuditRecordInput) {
+    return client.auditLog.create({
       data: {
         action: input.action,
-        actor: input.actor,
+        actorId: input.actor,
         entity: input.entity,
         entityId: input.entityId,
         metadata: input.metadata ? JSON.stringify(input.metadata) : null,

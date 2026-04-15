@@ -40,6 +40,10 @@ describe('Trips security (e2e)', () => {
   });
 
   beforeEach(async () => {
+    await prisma.auditLog.deleteMany();
+    await prisma.expense.deleteMany();
+    await prisma.outboxEvent.deleteMany();
+    await prisma.booking.deleteMany();
     await prisma.approval.deleteMany();
     await prisma.tripRequest.deleteMany();
     await prisma.user.deleteMany();

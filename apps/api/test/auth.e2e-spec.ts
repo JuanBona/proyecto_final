@@ -30,6 +30,10 @@ describe('Auth (e2e)', () => {
     await app.init();
 
     prisma = app.get(PrismaService);
+    await prisma.auditLog.deleteMany();
+    await prisma.expense.deleteMany();
+    await prisma.outboxEvent.deleteMany();
+    await prisma.booking.deleteMany();
     await prisma.approval.deleteMany();
     await prisma.tripRequest.deleteMany();
     await prisma.user.deleteMany();

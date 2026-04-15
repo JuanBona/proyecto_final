@@ -56,6 +56,7 @@ describe('Expenses (e2e)', () => {
       data: [
         { email: 'traveler-a@test.com', passwordHash, role: 'traveler' },
         { email: 'traveler-b@test.com', passwordHash, role: 'traveler' },
+        { email: 'approver@test.com', passwordHash, role: 'approver' },
       ],
     });
   });
@@ -98,6 +99,35 @@ describe('Expenses (e2e)', () => {
 
     expect(response.status).toBe(201);
     return response.body;
+  };
+
+  const approveTrip = async (approverToken: string, tripId: string) => {
+    const response = await request(app.getHttpServer())
+      .post(`/trips/${tripId}/approve`)
+      .set('Authorization', `Bearer ${approverToken}`)
+      .send({ comment: 'Approved for expenses' });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe('approved');
+    return response.body;
+  };
+
+  const bookTrip = async (approverToken: string, tripId: string) => {
+    const optionsResponse = await request(app.getHttpServer())
+      .get(`/bookings/options/${tripId}`)
+      .set('Authorization', `Bearer ${approverToken}`);
+
+    expect(optionsResponse.status).toBe(200);
+    const optionId = optionsResponse.body?.[0]?.id;
+    expect(optionId).toEqual(expect.any(String));
+
+    const confirmResponse = await request(app.getHttpServer())
+      .post('/bookings/confirm')
+      .set('Authorization', `Bearer ${approverToken}`)
+      .send({ tripId, optionId });
+
+    expect([200, 201]).toContain(confirmResponse.status);
+    expect(confirmResponse.body.status).toBe('booked');
   };
 
   const submitExpense = async (
@@ -147,7 +177,11 @@ describe('Expenses (e2e)', () => {
 
   it('returns flagged when traveler submits an expense above the policy cap', async () => {
     const travelerToken = await login('traveler-a@test.com');
+    const approverToken = await login('approver@test.com');
     const tripId = await createTrip(travelerToken, 500);
+    await submitTrip(travelerToken, tripId);
+    await approveTrip(approverToken, tripId);
+    await bookTrip(approverToken, tripId);
 
     const response = await submitExpense(
       travelerToken,
@@ -167,12 +201,16 @@ describe('Expenses (e2e)', () => {
 
   it('returns submitted when traveler submits an expense under the policy cap', async () => {
     const travelerToken = await login('traveler-a@test.com');
+    const approverToken = await login('approver@test.com');
     const tripId = await createTrip(travelerToken, 2000);
+    await submitTrip(travelerToken, tripId);
+    await approveTrip(approverToken, tripId);
+    await bookTrip(approverToken, tripId);
 
     const response = await submitExpense(
       travelerToken,
       tripId,
-      120,
+      70,
       'meal',
       'Lunch with client',
     );
@@ -187,8 +225,12 @@ describe('Expenses (e2e)', () => {
 
   it("returns 403 FORBIDDEN when submitting an expense for another traveler's trip", async () => {
     const travelerAToken = await login('traveler-a@test.com');
+    const approverToken = await login('approver@test.com');
     const travelerBToken = await login('traveler-b@test.com');
     const travelerBTripId = await createTrip(travelerBToken);
+    await submitTrip(travelerBToken, travelerBTripId);
+    await approveTrip(approverToken, travelerBTripId);
+    await bookTrip(approverToken, travelerBTripId);
 
     const response = await submitExpense(travelerAToken, travelerBTripId, 80, 'taxi');
 
@@ -200,7 +242,7 @@ describe('Expenses (e2e)', () => {
     );
   });
 
-  it('returns 409 INVALID_STATUS when submitting an expense for a trip not in draft status', async () => {
+  it('returns 409 INVALID_STATUS when submitting an expense for a trip in pending_approval', async () => {
     const travelerToken = await login('traveler-a@test.com');
     const tripId = await createTrip(travelerToken);
     await submitTrip(travelerToken, tripId);
@@ -217,7 +259,11 @@ describe('Expenses (e2e)', () => {
 
   it('writes audit log action EXPENSE_SUBMITTED when expense submission succeeds', async () => {
     const travelerToken = await login('traveler-a@test.com');
+    const approverToken = await login('approver@test.com');
     const tripId = await createTrip(travelerToken);
+    await submitTrip(travelerToken, tripId);
+    await approveTrip(approverToken, tripId);
+    await bookTrip(approverToken, tripId);
 
     const response = await submitExpense(travelerToken, tripId, 70, 'meal', 'Team dinner');
 

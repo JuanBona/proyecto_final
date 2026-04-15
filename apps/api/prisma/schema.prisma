@@ -89,7 +89,7 @@ model Expense {
   amount        Float
   category      String
   description   String?
-  // Allowed: "pending" | "flagged" | "accepted"
+  // Allowed: "pending" | "submitted" | "flagged" | "accepted"
   status        String      @default("pending")
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

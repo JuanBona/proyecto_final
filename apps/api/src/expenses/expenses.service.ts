@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -49,16 +50,10 @@ export class ExpensesService {
     const status = cap !== undefined && input.amount > cap ? 'flagged' : 'submitted';
 
     return this.prisma.$transaction(async (tx) => {
-      const prismaTx = tx as unknown as {
-        expense: {
-          create: (args: unknown) => Promise<{ id: string } & Record<string, unknown>>;
-        };
-      };
-
-      const expense = await prismaTx.expense.create({
+      const expense = await tx.expense.create({
         data: {
           tripRequestId: tripId,
-          travelerId,
+          submittedById: travelerId,
           amount: input.amount,
           category: input.category.trim(),
           description: input.description?.trim() || null,
@@ -66,7 +61,7 @@ export class ExpensesService {
         },
       });
 
-      await this.auditService.logWithClient(tx, {
+      await this.auditService.logWithClient(tx as Prisma.TransactionClient, {
         action: 'EXPENSE_SUBMITTED',
         actor: travelerId,
         entity: 'Expense',
