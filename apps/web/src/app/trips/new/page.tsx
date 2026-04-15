@@ -11,6 +11,7 @@ interface TripsNewPageProps {
 }
 
 export default function TripsNewPage({ searchParams }: TripsNewPageProps) {
+  requireSession(["traveler"]);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const message = typeof searchParams?.message === "string" ? searchParams.message : undefined;
 

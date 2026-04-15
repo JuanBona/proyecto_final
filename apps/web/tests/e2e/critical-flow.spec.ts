@@ -1,4 +1,37 @@
 import { expect, test } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
+import * as bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
+
+const dbPathCandidates = [
+  path.resolve(process.cwd(), "apps/api/prisma/dev.db"),
+  path.resolve(process.cwd(), "../api/prisma/dev.db"),
+];
+const dbPath = dbPathCandidates.find((candidate) => fs.existsSync(candidate));
+const prisma = new PrismaClient({
+  datasources: {
+    db: { url: `file:${dbPath ?? dbPathCandidates[0]}` },
+  },
+});
+
+test.beforeAll(async () => {
+  const passwordHash = await bcrypt.hash("password123", 10);
+  await prisma.user.upsert({
+    where: { email: "traveler@test.com" },
+    update: {},
+    create: { email: "traveler@test.com", passwordHash, role: "traveler" },
+  });
+  await prisma.user.upsert({
+    where: { email: "approver@test.com" },
+    update: {},
+    create: { email: "approver@test.com", passwordHash, role: "approver" },
+  });
+});
+
+test.afterAll(async () => {
+  await prisma.$disconnect();
+});
 
 test("redirects /trips/new to /login when no session", async ({ page }) => {
   await page.goto("/trips/new");
@@ -34,5 +67,5 @@ test("traveler requests trip and approver sees pending approval", async ({ page 
 
   await expect(page).toHaveURL(/\/approvals/);
   await expect(page.getByRole("heading", { name: "Pendientes de aprobación" })).toBeVisible();
-  await expect(page.getByText(uniqueDestination)).toBeVisible();
+  await expect(page.getByRole("heading", { name: uniqueDestination })).toBeVisible();
 });

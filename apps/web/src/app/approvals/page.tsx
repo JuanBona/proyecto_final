@@ -74,7 +74,11 @@ export default async function ApprovalsPage({ searchParams }: ApprovalsPageProps
                 <p className="mb-4 text-sm text-muted-foreground">{trip.reason}</p>
                 <form action={decideTripAction} className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-center">
                   <input type="hidden" name="tripId" value={trip.id} />
+                  <label htmlFor={`comment-${trip.id}`} className="sr-only">
+                    Comentario para {trip.destination}
+                  </label>
                   <input
+                    id={`comment-${trip.id}`}
                     type="text"
                     name="comment"
                     placeholder="Comentario opcional"

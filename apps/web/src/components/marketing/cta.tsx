@@ -19,7 +19,9 @@ export function Cta() {
         </p>
         <div className="mt-6 flex justify-center">
           <Link href="/login">
-            <Button size="lg">Comenzar ahora</Button>
+            <motion.div whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+              <Button size="lg">Comenzar ahora</Button>
+            </motion.div>
           </Link>
         </div>
       </motion.div>
