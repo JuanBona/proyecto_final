@@ -19,7 +19,7 @@ test.beforeAll(async () => {
   const passwordHash = await bcrypt.hash("password123", 10);
   await prisma.user.upsert({
     where: { email: "traveler@test.com" },
-    update: {},
+    update: { passwordHash, role: "traveler" },
     create: { email: "traveler@test.com", passwordHash, role: "traveler" },
   });
 });
@@ -45,6 +45,10 @@ test("internal screens use polished app shell surfaces", async ({ page }) => {
   await page.getByRole("button", { name: "Ingresar" }).click();
 
   await expect(page).toHaveURL(/\/trips\/new/);
-  await expect(page.locator("[data-ui='app-shell-header']")).toBeVisible();
-  await expect(page.locator("[data-ui='app-shell-header']")).toHaveClass(/backdrop-blur/);
+  const header = page.locator("[data-ui='app-shell-header']");
+  await expect(header).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 500));
+  const box = await header.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.y).toBeLessThan(64);
 });
