@@ -56,7 +56,10 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
           {message}
         </p>
       ) : null}
-      <form action={submitExpenseAction} className="grid gap-5 rounded-2xl border border-border bg-card p-6">
+      <form
+        action={submitExpenseAction}
+        className="grid gap-5 rounded-2xl border border-border/70 bg-card/85 p-6 shadow-[0_12px_36px_rgba(2,6,23,0.08)]"
+      >
         <div className="grid gap-2">
           <label htmlFor="tripId" className="text-sm font-medium">
             Viaje
@@ -65,7 +68,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
             id="tripId"
             name="tripId"
             required
-            className="h-10 rounded-xl border border-border bg-transparent px-3 text-sm"
+            className="h-10 rounded-xl border border-border/80 bg-card/65 px-3 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 focus-visible:ring-offset-2"
           >
             <option value="">Selecciona un viaje</option>
             {trips.map((trip) => (

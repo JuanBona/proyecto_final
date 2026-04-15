@@ -6,12 +6,17 @@ import { Button } from "@/components/ui/button";
 
 export function Hero() {
   return (
-    <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-20 md:py-28">
+    <section className="relative mx-auto flex max-w-6xl flex-col gap-8 overflow-hidden px-6 py-20 md:py-28">
+      <div
+        data-ui="hero-accent"
+        aria-hidden
+        className="pointer-events-none absolute inset-x-16 top-4 -z-10 h-56 rounded-full bg-gradient-to-b from-primary/16 via-primary/8 to-transparent blur-3xl"
+      />
       <motion.p
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-fit rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
+        className="w-fit rounded-full border border-border/80 bg-card/60 px-3 py-1 text-xs text-muted-foreground"
       >
         Aprobaciones, reservas y gastos en un solo flujo
       </motion.p>
@@ -24,7 +29,7 @@ export function Hero() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-2xl text-base text-muted-foreground sm:text-lg"
+        className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
       >
         Centraliza solicitudes, decisiones y comprobantes con una experiencia premium inspirada en productos de
         clase mundial.

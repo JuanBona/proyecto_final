@@ -1,11 +1,13 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { surfaceVariants } from "@/components/ui/surface";
 
 export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+  ({ className, ["data-ui"]: dataUi, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("rounded-2xl border border-border bg-card text-card-foreground shadow-sm", className)}
+      data-ui={dataUi ?? "card-surface"}
+      className={cn(surfaceVariants({ tone: "soft" }), className)}
       {...props}
     />
   ),

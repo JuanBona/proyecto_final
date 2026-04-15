@@ -9,8 +9,11 @@ interface AppShellProps {
 
 export function AppShell({ title, subtitle, children }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.06),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(15,23,42,0.05),transparent_44%)] bg-background">
+      <header
+        data-ui="app-shell-header"
+        className="sticky top-0 z-30 border-b border-border/70 bg-background/80 backdrop-blur-md"
+      >
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
           <div>
             <p className="text-sm font-semibold tracking-tight">Viajes Corporativos</p>

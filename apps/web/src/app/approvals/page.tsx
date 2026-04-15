@@ -56,13 +56,13 @@ export default async function ApprovalsPage({ searchParams }: ApprovalsPageProps
         </p>
       ) : null}
       {pendingTrips.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-dashed border-border/80 bg-card/70 p-6 text-sm text-muted-foreground">
           No hay solicitudes pendientes en este momento.
         </p>
       ) : (
         <div className="grid gap-4">
           {pendingTrips.map((trip) => (
-            <Card key={trip.id}>
+            <Card key={trip.id} className="border-border/70 bg-card/85 shadow-[0_12px_36px_rgba(2,6,23,0.08)]">
               <CardHeader>
                 <CardTitle>{trip.destination}</CardTitle>
                 <CardDescription>
@@ -82,7 +82,7 @@ export default async function ApprovalsPage({ searchParams }: ApprovalsPageProps
                     type="text"
                     name="comment"
                     placeholder="Comentario opcional"
-                    className="h-10 rounded-xl border border-border bg-transparent px-3 text-sm"
+                    className="h-10 rounded-xl border border-border/80 bg-card/65 px-3 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 focus-visible:ring-offset-2"
                   />
                   <Button type="submit" name="decision" value="approve">
                     Aprobar

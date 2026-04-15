@@ -59,7 +59,10 @@ export default function TripsNewPage({ searchParams }: TripsNewPageProps) {
           {message}
         </p>
       ) : null}
-      <form action={createTripAction} className="grid gap-5 rounded-2xl border border-border bg-card p-6">
+      <form
+        action={createTripAction}
+        className="grid gap-5 rounded-2xl border border-border/70 bg-card/85 p-6 shadow-[0_12px_36px_rgba(2,6,23,0.08)]"
+      >
         <div className="grid gap-2">
           <label htmlFor="destination" className="text-sm font-medium">
             Destino

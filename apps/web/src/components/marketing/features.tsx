@@ -25,7 +25,7 @@ const items = [
 export function Features() {
   return (
     <section id="features" className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-      <div className="mb-10">
+      <div className="mb-10 border-l-2 border-primary/35 pl-4">
         <h2 className="text-3xl font-semibold tracking-tight">Todo el flujo en un mismo lugar</h2>
         <p className="mt-3 text-muted-foreground">Diseñado para equipos que priorizan velocidad, control y claridad.</p>
       </div>
@@ -35,16 +35,19 @@ export function Features() {
             key={item.title}
             initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -4, scale: 1.01 }}
+            whileHover={{ y: -3, scale: 1.01 }}
             whileTap={{ scale: 0.995 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
+            transition={{ duration: 0.35, delay: index * 0.08 }}
           >
-            <Card className="h-full">
+            <Card
+              data-ui="feature-surface"
+              className="h-full border-border/75 bg-card/85 shadow-[0_14px_38px_rgba(2,6,23,0.08)]"
+            >
               <CardHeader>
                 <item.icon className="h-5 w-5 text-primary" aria-hidden />
                 <CardTitle className="mt-4">{item.title}</CardTitle>
-                <CardDescription>{item.description}</CardDescription>
+                <CardDescription className="leading-relaxed">{item.description}</CardDescription>
               </CardHeader>
               <CardContent />
             </Card>
