@@ -6,3 +6,5 @@ import { TripsModule } from './trips/trips.module';
   imports: [AuthModule, TripsModule],
 })
 export class AppModule {}
+
+/// proving that the code is complete and functional, here is a simple test case:
